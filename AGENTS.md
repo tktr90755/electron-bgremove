@@ -1,19 +1,54 @@
-# Repository Guidelines
+# Agent Playbook
 
-## Project Structure & Module Organization
-Source lives under `src/` with `main/` for the Electron process, `preload/` for the isolated bridge, and `renderer/` for the Vite-powered UI. Build output lands in `out/` (dev) and `dist/` (packaged installers). Shared assets, including the U²Net model, belong in `assets/`; keep large binaries in `assets/models/`. Automation scripts for multi-platform builds sit in `scripts/`. Logs from local runs gather in `logs/`; clear them before committing unless they illustrate an issue.
+このリポジトリで作業するエージェント向けの簡易ハンドブックです。最新の実装状況は `README.md` も参照してください。
 
-## Build, Test, and Development Commands
-Install deps with `npm install`. Use `npm run dev` for a hot-reload Electron session, and `npm run build` to emit production bundles in `out/`. Package installers with `npm run dist`, or target platforms via `npm run build:win`, `npm run build:mac`, or `npm run build:linux`. Run `npm run preview` to inspect the renderer bundle alone. Keep native dependencies aligned with `npm run rebuild` after Node/Electron upgrades.
+## プロジェクト概要
+- Electron + Vite + TypeScript 製のデスクトップアプリ
+- U²Net (`u2net.onnx`) を ONNX Runtime で推論し、Sharp で透過 PNG を生成
+- ドラッグ & ドロップ UI、後処理スライダー、結果プレビューを実装済み
+- メインプロセス (`src/main`) とレンダラー (`src/renderer`)、プリロード (`src/preload`) に明確に分離
 
-## Coding Style & Naming Conventions
-TypeScript is the default; keep files as `.ts`/`.tsx`. Prettier enforces 2-space indentation, 100-character lines, single quotes, and semicolons—run `npx prettier --write .` before large submissions. ESLint (see `.eslintrc.js`) forbids unused variables and encourages `const`; prefix intentionally unused params with `_`. Use `PascalCase` for classes, `camelCase` for functions and variables, and `SCREAMING_SNAKE_CASE` only for constants.
+## 重要ディレクトリ
+- `src/main/main.ts`: ウィンドウ生成と IPC ハンドラ
+- `src/main/inference.ts`: 推論エンジン、プロバイダーの自動選択と前後処理
+- `src/main/pipeline.ts`: マスク合成・プレビュー生成
+- `src/preload/preload.ts`: `window.bgremove` API を公開
+- `src/renderer/index.ts`: UI 状態・イベント・IPC 呼び出し
+- `assets/models/u2net.onnx`: 背景除去モデル（Git 管理対象外）
 
-## Testing Guidelines
-There is no dedicated unit-test harness yet; rely on the sample pipeline via `npm run sample` to sanity-check ONNX integration. Always run `npm run typecheck` and `npm run lint` before pushing. When adding automated tests, follow the existing `src` structure and co-locate specs near the modules they cover; name files `*.spec.ts`. Document any manual QA steps in your PR.
+## 依存関係と実行
+```bash
+npm install     # 依存導入
+npm run dev     # Electron + Vite 開発モード
+npm run build   # out/ へ本番ビルド
+npm run preview # レンダラー単体プレビュー
+```
 
-## Commit & Pull Request Guidelines
-History favors short, imperative commit subjects (e.g., `Add GPU mode toggle`). Group unrelated work into separate commits and add focused body paragraphs when context matters. For pull requests, include a summary, highlight user-facing changes with screenshots or GIFs, and reference issues with `Fixes #123` when applicable. Call out platform-specific impacts and model or asset updates so reviewers can re-validate packaging.
+## 品質チェック
+```bash
+npm run typecheck  # TypeScript 型検査
+npm run lint       # ESLint
+npm run sample     # out/ を利用した E2E サンプル処理（事前に npm run build が必要）
+```
 
-## Model & Configuration Notes
-Never commit proprietary models; add download instructions or scripts instead. Validate that paths in `electron-builder.json` still match any new assets. Use environment variables (e.g., `LOG_LEVEL`) via `.env` files ignored by Git, and document new keys in the README.
+## パッケージング
+- `npm run dist`: 現プラットフォームのインストーラー作成（electron-builder）
+- `npm run build:win|mac|linux|all`: `scripts/` 配下のラッパーを利用
+- 出力は `dist/`、`assets/icon.*` と `electron-builder.json` のパス整合に注意
+
+## 開発メモ
+- 推論プロバイダーは `dml → cuda → coreml → wasm → cpu` の優先度で自動選択
+- マスクはシグモイド→閾値→モルフォロジー→ガウシアンブラーで後処理
+- レンダラーでは画像のプレビューと結果サムネイルを `nativeImage` で生成
+- `npm run sample` はビルド成果物 (`out/main`) の CommonJS を利用するため、開発中に差分がある場合は再ビルドが必要
+
+## 運用ルール
+- 大容量モデルはコミット禁止。README にダウンロード手順を記載済み
+- ログは `logs/` に生成されるため、不要ならクリーンアップ
+- PR 作成前に `typecheck` / `lint` / 必要に応じて `sample` の実行結果を共有する
+- 変更時は `README.md` / `AGENTS.md` の記述が実装と乖離していないかセルフチェック
+
+## 参考資料
+- Electron セキュリティベストプラクティス: [https://www.electronjs.org/docs/latest/tutorial/security](https://www.electronjs.org/docs/latest/tutorial/security)
+- ONNX Runtime GPU Provider Docs: [https://onnxruntime.ai/docs/execution-providers/](https://onnxruntime.ai/docs/execution-providers/)
+- Sharp API: [https://sharp.pixelplumbing.com/api](https://sharp.pixelplumbing.com/api)
