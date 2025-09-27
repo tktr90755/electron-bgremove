@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Remover</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>🎭 Background Remover</h1>
+      <p>AI を使用して画像の背景を自動除去</p>
+    </header>
+
+    <main class="main">
+      <!-- ファイル選択エリア -->
+      <section class="file-section">
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-zone-content">
+            <div class="drop-icon">📁</div>
+            <p>画像ファイルをドラッグ&ドロップ</p>
+            <p>または</p>
+            <button class="btn btn-primary" id="selectFilesBtn">ファイルを選択</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 設定パネル -->
+      <section class="settings-section">
+        <h3>設定</h3>
+        <div class="settings-grid">
+          <div class="setting-item">
+            <label for="resizeInput">事前リサイズ (長辺):</label>
+            <input type="number" id="resizeInput" min="0" max="4096" value="2048" placeholder="0 = 無効">
+            <span class="help-text">大きな画像のメモリ節約</span>
+          </div>
+          
+          <div class="setting-item">
+            <label for="thresholdInput">しきい値:</label>
+            <input type="range" id="thresholdInput" min="0" max="255" value="128">
+            <span id="thresholdValue">128</span>
+          </div>
+          
+          <div class="setting-item">
+            <label for="blurInput">ぼかし半径:</label>
+            <input type="range" id="blurInput" min="0" max="10" value="2" step="0.5">
+            <span id="blurValue">2</span>
+          </div>
+          
+          <div class="setting-item">
+            <label for="outputDir">出力ディレクトリ:</label>
+            <div class="output-dir-group">
+              <input type="text" id="outputDir" placeholder="入力ファイルと同じディレクトリ" readonly>
+              <button class="btn btn-secondary" id="selectOutputDirBtn">選択</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ファイルリスト -->
+      <section class="files-section" id="filesSection" style="display: none;">
+        <h3>選択されたファイル</h3>
+        <div class="file-list" id="fileList"></div>
+        <div class="file-actions">
+          <button class="btn btn-primary" id="processBtn" disabled>処理開始</button>
+          <button class="btn btn-secondary" id="clearBtn">クリア</button>
+        </div>
+      </section>
+
+      <!-- 進捗表示 -->
+      <section class="progress-section" id="progressSection" style="display: none;">
+        <h3>処理中...</h3>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">0 / 0</div>
+        <div class="progress-detail" id="progressDetail"></div>
+      </section>
+
+      <!-- 結果表示 -->
+      <section class="results-section" id="resultsSection" style="display: none;">
+        <h3>処理結果</h3>
+        <div class="results-list" id="resultsList"></div>
+        <div class="results-actions">
+          <button class="btn btn-primary" id="openOutputBtn">出力フォルダを開く</button>
+          <button class="btn btn-secondary" id="newProcessBtn">新しい処理</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- ステータスバー -->
+    <footer class="status-bar">
+      <div class="status-info">
+        <span id="modelInfo">モデル: 読み込み中...</span>
+        <span id="providerInfo">プロバイダ: 確認中...</span>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="./index.ts"></script>
+</body>
+</html>
